@@ -1,0 +1,52 @@
+@model SearchViewModel
+@{ ViewData["Title"] = "Search"; }
+<h1 class="h4 mb-3">Search results @if (Model.Q.Length > 0) { <small class="text-muted">for "@Model.Q"</small> }</h1>
+
+@if (Model.Q.Length < 2)
+{
+    <div class="alert alert-info">Enter at least 2 characters to search customers, leads and opportunities you have access to.</div>
+}
+else if (!Model.Customers.Any() && !Model.Leads.Any() && !Model.Opportunities.Any())
+{
+    <div class="alert alert-warning">No matching records found.</div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card h-100"><div class="card-header">Customers (@Model.Customers.Count)</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var c in Model.Customers)
+                    {
+                        <li class="list-group-item"><a asp-controller="Customers" asp-action="Details" asp-route-id="@c.CustomerId">@c.CustomerName</a>
+                            <div class="small text-muted">@c.CustomerCode &middot; @c.Email</div></li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100"><div class="card-header">Leads (@Model.Leads.Count)</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var l in Model.Leads)
+                    {
+                        <li class="list-group-item"><a asp-controller="Leads" asp-action="Details" asp-route-id="@l.LeadId">@l.LeadName</a>
+                            @Ui.StatusBadge(l.Status)
+                            <div class="small text-muted">@l.LeadCode &middot; @l.Email</div></li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100"><div class="card-header">Opportunities (@Model.Opportunities.Count)</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var o in Model.Opportunities)
+                    {
+                        <li class="list-group-item"><a asp-controller="Opportunities" asp-action="Details" asp-route-id="@o.OpportunityId">@o.OpportunityName</a>
+                            @Ui.StatusBadge(o.Stage)
+                            <div class="small text-muted">@o.Customer?.CustomerName &middot; @Html.Money(o.Amount)</div></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}

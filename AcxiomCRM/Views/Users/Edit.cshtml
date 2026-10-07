@@ -1,0 +1,36 @@
+@model UserEditViewModel
+@{ ViewData["Title"] = "Edit user"; }
+<h1 class="h4 mb-3">Edit user <small class="text-muted fs-6">@Model.Email</small></h1>
+
+<form method="post" asp-action="Edit" asp-route-id="@Model.Id" novalidate>
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+    <div class="card"><div class="card-body"><div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label required-star"></label>
+            <input asp-for="FullName" class="form-control" maxlength="100" />
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" value="@Model.Email" disabled />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Role" class="form-label required-star"></label>
+            <select asp-for="Role" class="form-select" asp-items="@CrmItems.From(AppRoles.All, Model.Role)"></select>
+            <div class="form-text">Exactly one primary role. Changing the role signs the user out of existing sessions.</div>
+            <span asp-validation-for="Role" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="ManagerId" class="form-label"></label>
+            <select asp-for="ManagerId" class="form-select" asp-items="Model.Managers"><option value="">-- None --</option></select>
+            <span asp-validation-for="ManagerId" class="text-danger"></span>
+        </div>
+    </div></div>
+    <div class="card-footer text-end">
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div></div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

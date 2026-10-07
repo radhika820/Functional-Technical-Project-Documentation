@@ -1,0 +1,102 @@
+@model LeadDetailsViewModel
+@{
+    var l = Model.Lead;
+    ViewData["Title"] = l.LeadName;
+}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-0">@l.LeadName @Ui.StatusBadge(l.Status) @Ui.StatusBadge(l.Priority)</h1>
+        <div class="text-muted">@l.LeadCode @if (!string.IsNullOrEmpty(l.CompanyName)) { <text>&middot; @l.CompanyName</text> }</div>
+    </div>
+    <div class="d-flex flex-wrap gap-1">
+        @if (l.Status != LeadStatuses.Converted)
+        {
+            <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@l.LeadId"><i class="bi bi-pencil"></i> Edit</a>
+        }
+        @if (l.Status == LeadStatuses.Qualified)
+        {
+            <a class="btn btn-success btn-sm" asp-action="Convert" asp-route-id="@l.LeadId"><i class="bi bi-arrow-right-circle"></i> Convert to customer</a>
+        }
+        <a class="btn btn-outline-secondary btn-sm" asp-controller="FollowUps" asp-action="Create" asp-route-leadId="@l.LeadId"><i class="bi bi-alarm"></i> Follow-up</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-controller="Activities" asp-action="Create" asp-route-leadId="@l.LeadId"><i class="bi bi-calendar-plus"></i> Activity</a>
+        @if (l.Status != LeadStatuses.Converted)
+        {
+            <form method="post" asp-action="Delete" asp-route-id="@l.LeadId" data-confirm="Delete lead @l.LeadName? This cannot be undone.">
+                <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash"></i> Delete</button>
+            </form>
+        }
+        <a class="btn btn-link btn-sm" asp-action="Index">Back</a>
+    </div>
+</div>
+
+@if (Model.NextStatuses.Any() && l.Status != LeadStatuses.Converted)
+{
+    <div class="card mb-3"><div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+        <span class="text-muted small">Move lead to:</span>
+        @foreach (var s in Model.NextStatuses)
+        {
+            <form method="post" asp-action="ChangeStatus" asp-route-id="@l.LeadId">
+                <input type="hidden" name="status" value="@s" />
+                <button type="submit" class="btn btn-sm btn-outline-@Ui.Badge(s)">@s</button>
+            </form>
+        }
+    </div></div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">Contact &amp; source</div><div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@l.Email</dd>
+            <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">@l.Phone</dd>
+            <dt class="col-sm-4">Source</dt><dd class="col-sm-8">@l.Source</dd>
+            <dt class="col-sm-4">Expected value</dt><dd class="col-sm-8">@Html.Money(l.ExpectedValue)</dd>
+        </dl></div></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">Ownership &amp; conversion</div><div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4">Assigned to</dt><dd class="col-sm-8">@Ui.Owner(l.AssignedUser)</dd>
+            <dt class="col-sm-4">Created</dt><dd class="col-sm-8">@AppFormat.DateTimeLocal(l.CreatedDate)</dd>
+            <dt class="col-sm-4">Converted</dt>
+            <dd class="col-sm-8">
+                @if (l.ConvertedCustomerId != null)
+                {
+                    <a asp-controller="Customers" asp-action="Details" asp-route-id="@l.ConvertedCustomerId">@l.ConvertedCustomer?.CustomerCode</a>
+                    <span class="text-muted small">on @AppFormat.Date(l.ConvertedDate?.ToLocalTime())</span>
+                }
+                else { <text>-</text> }
+            </dd>
+            <dt class="col-sm-4">Notes</dt><dd class="col-sm-8">@(l.Notes ?? "-")</dd>
+        </dl></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">Follow-ups</div>
+        <ul class="list-group list-group-flush">
+            @foreach (var f in Model.FollowUps)
+            {
+                <li class="list-group-item d-flex justify-content-between"><span><a asp-controller="FollowUps" asp-action="Details" asp-route-id="@f.FollowUpId">@f.Subject</a>
+                    <span class="text-muted small">&middot; @AppFormat.Date(f.FollowUpDate)</span></span>@Ui.StatusBadge(f.IsOverdue ? "Overdue" : f.Status)</li>
+            }
+            @if (!Model.FollowUps.Any()) { <li class="list-group-item text-muted">No follow-ups.</li> }
+        </ul></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">Activities</div>
+        <ul class="list-group list-group-flush">
+            @foreach (var a in Model.Activities)
+            {
+                <li class="list-group-item d-flex justify-content-between"><span>@a.ActivityType: @a.Subject
+                    <span class="text-muted small">&middot; @AppFormat.Date(a.ActivityDate)</span></span>@Ui.StatusBadge(a.Status)</li>
+            }
+            @if (!Model.Activities.Any()) { <li class="list-group-item text-muted">No activities.</li> }
+        </ul></div></div>
+</div>
+
+<div class="card"><div class="card-header">Change history</div>
+    <div class="table-responsive"><table class="table table-sm mb-0">
+        <thead><tr><th>When</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+        <tbody>
+        @foreach (var h in Model.History)
+        {
+            <tr><td>@AppFormat.DateTimeLocal(h.CreatedDate)</td><td>@h.UserName</td><td>@h.Action</td>
+                <td class="small text-muted">@(h.Action == AuditActions.StatusChange ? $"{h.OldValue} → {h.NewValue}" : h.Details)</td></tr>
+        }
+        @if (!Model.History.Any()) { <tr><td colspan="4" class="text-muted">No history recorded.</td></tr> }
+        </tbody></table></div></div>

@@ -1,0 +1,59 @@
+@model ActivityFormViewModel
+@{
+    var isNew = Model.ActivityId == 0;
+    ViewData["Title"] = isNew ? "Log activity" : "Edit activity";
+}
+<h1 class="h4 mb-3">@ViewData["Title"]</h1>
+
+<form method="post" asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.ActivityId)" novalidate>
+    <input type="hidden" asp-for="ActivityId" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+    <div class="card"><div class="card-body"><div class="row g-3">
+        <div class="col-md-3">
+            <label asp-for="ActivityType" class="form-label required-star"></label>
+            <select asp-for="ActivityType" class="form-select" asp-items="@CrmItems.From(ActivityTypes.All, Model.ActivityType)"></select>
+            <span asp-validation-for="ActivityType" class="text-danger"></span>
+        </div>
+        <div class="col-md-5">
+            <label asp-for="Subject" class="form-label required-star"></label>
+            <input asp-for="Subject" class="form-control" maxlength="150" />
+            <span asp-validation-for="Subject" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ActivityDate" class="form-label required-star"></label>
+            <input asp-for="ActivityDate" type="date" class="form-control" />
+            <span asp-validation-for="ActivityDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Status" class="form-label required-star"></label>
+            <select asp-for="Status" class="form-select" asp-items="@CrmItems.From(ActivityStatuses.All, Model.Status)"></select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CustomerId" class="form-label"></label>
+            <select asp-for="CustomerId" class="form-select" asp-items="Model.Customers"><option value="">-- None --</option></select>
+            <span asp-validation-for="CustomerId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="LeadId" class="form-label"></label>
+            <select asp-for="LeadId" class="form-select" asp-items="Model.Leads"><option value="">-- None --</option></select>
+            <span asp-validation-for="LeadId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="AssignedTo" class="form-label"></label>
+            <select asp-for="AssignedTo" class="form-select" asp-items="Model.Owners"></select>
+            <span asp-validation-for="AssignedTo" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="3" maxlength="1000"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+    </div></div>
+    <div class="card-footer text-end">
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div></div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

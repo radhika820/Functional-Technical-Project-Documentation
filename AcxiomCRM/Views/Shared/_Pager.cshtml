@@ -1,0 +1,27 @@
+@model IPagedInfo
+@if (Model.TotalPages > 1)
+{
+    var start = Math.Max(1, Model.Page - 2);
+    var end = Math.Min(Model.TotalPages, Model.Page + 2);
+    <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item @(Model.Page == 1 ? "disabled" : "")"><a class="page-link" href="@Html.PageUrl(Model.Page - 1)">Previous</a></li>
+            @if (start > 1)
+            {
+                <li class="page-item"><a class="page-link" href="@Html.PageUrl(1)">1</a></li>
+                @if (start > 2) { <li class="page-item disabled"><span class="page-link">&hellip;</span></li> }
+            }
+            @for (var p = start; p <= end; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" href="@Html.PageUrl(p)">@p</a></li>
+            }
+            @if (end < Model.TotalPages)
+            {
+                @if (end < Model.TotalPages - 1) { <li class="page-item disabled"><span class="page-link">&hellip;</span></li> }
+                <li class="page-item"><a class="page-link" href="@Html.PageUrl(Model.TotalPages)">@Model.TotalPages</a></li>
+            }
+            <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")"><a class="page-link" href="@Html.PageUrl(Model.Page + 1)">Next</a></li>
+        </ul>
+    </nav>
+}
+<p class="text-center text-muted small mt-2 mb-0">@Model.TotalCount record(s) &middot; page @Model.Page of @Math.Max(1, Model.TotalPages)</p>

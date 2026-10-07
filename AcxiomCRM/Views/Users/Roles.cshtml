@@ -1,0 +1,18 @@
+@model List<RoleRowViewModel>
+@{ ViewData["Title"] = "Roles"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Roles</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Permissions">Permission matrix</a>
+        <a class="btn btn-outline-secondary" asp-action="Index">Users</a>
+    </div>
+</div>
+<div class="card"><div class="table-responsive"><table class="table align-middle mb-0">
+    <thead class="table-light"><tr><th>Role</th><th>Access scope</th><th class="text-end">Users</th><th class="text-end">Active</th></tr></thead>
+    <tbody>
+    @foreach (var r in Model)
+    {
+        <tr><td><span class="badge text-bg-secondary">@r.Role</span></td><td>@r.Scope</td><td class="text-end">@r.Users</td><td class="text-end">@r.ActiveUsers</td></tr>
+    }
+    </tbody></table></div></div>
+<p class="text-muted small mt-2">The role model is fixed to Admin, Manager and Sales Executive. Roles are assigned per user in <a asp-action="Index">Users</a>.</p>

@@ -1,0 +1,14 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.Code.ToString();
+    var title = Model.Code switch { 401 => "Sign in required", 403 => "Access denied", 404 => "Page not found", 429 => "Too many requests", _ => "Request failed" };
+}
+<div class="text-center py-5">
+    <h1 class="display-4 text-muted">@Model.Code</h1>
+    <h2 class="h4">@title</h2>
+    <p class="text-muted">
+        @(Model.Code == 404 ? "The page or record you requested does not exist." :
+          Model.Code == 403 ? "You do not have permission to access this resource." : "Please try again.")
+    </p>
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Go to home</a>
+</div>

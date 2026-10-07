@@ -1,0 +1,116 @@
+@model ReportPageViewModel
+@{
+    ViewData["Title"] = Model.Table.Title;
+    var f = Model.Filter;
+    var exportUrl = Url.Action(Model.Action, "Reports", new
+    {
+        from = f.From?.ToString("yyyy-MM-dd"), to = f.To?.ToString("yyyy-MM-dd"), status = f.Status, ownerId = f.OwnerId,
+        module = f.Module, q = f.Q, groupBy = f.GroupBy, export = true
+    });
+    string FormatCell(object? c) => c switch
+    {
+        null => "-",
+        DateTime d => AppFormat.Date(d),
+        decimal m => AppFormat.Money(m),
+        double x => x.ToString("0.0") + "%",
+        bool b => b ? "Yes" : "No",
+        _ => c.ToString() ?? ""
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-0">@Model.Table.Title</h1>
+        <div class="text-muted small">@Model.Table.Description</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Index">All reports</a>
+        <a class="btn btn-outline-success" href="@exportUrl"><i class="bi bi-download"></i> Export CSV</a>
+    </div>
+</div>
+
+<form method="get" asp-action="@Model.Action" class="row g-2 mb-3">
+    @if (Model.ShowDates)
+    {
+        <div class="col-auto"><label class="form-label small mb-0" for="from">From</label>
+            <input type="date" id="from" name="from" value="@f.From?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+        <div class="col-auto"><label class="form-label small mb-0" for="to">To</label>
+            <input type="date" id="to" name="to" value="@f.To?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+    }
+    @if (Model.StatusLabel != null)
+    {
+        <div class="col-auto"><label class="form-label small mb-0" for="status">@Model.StatusLabel</label>
+            <select id="status" name="status" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var s in Model.StatusOptions) { <option value="@s.Value" selected="@s.Selected">@s.Text</option> }
+            </select></div>
+    }
+    @if (Model.ShowOwner)
+    {
+        <div class="col-auto"><label class="form-label small mb-0" for="ownerId">Owner / user</label>
+            <select id="ownerId" name="ownerId" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var o in Model.Owners) { <option value="@o.Value" selected="@o.Selected">@o.Text</option> }
+            </select></div>
+    }
+    @if (Model.ShowGroupBy)
+    {
+        <div class="col-auto"><label class="form-label small mb-0" for="groupBy">Group by</label>
+            <select id="groupBy" name="groupBy" class="form-select form-select-sm">
+                <option value="stage" selected="@(!string.Equals(f.GroupBy, "owner", StringComparison.OrdinalIgnoreCase))">Stage</option>
+                <option value="owner" selected="@(string.Equals(f.GroupBy, "owner", StringComparison.OrdinalIgnoreCase))">Owner</option>
+            </select></div>
+    }
+    @if (Model.ShowAuditFilters)
+    {
+        <div class="col-auto"><label class="form-label small mb-0" for="module">Module</label>
+            <select id="module" name="module" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var m in Model.Modules) { <option value="@m.Value" selected="@m.Selected">@m.Text</option> }
+            </select></div>
+        <div class="col-auto"><label class="form-label small mb-0" for="q">User / text</label>
+            <input id="q" name="q" value="@f.Q" class="form-control form-control-sm" maxlength="100" /></div>
+    }
+    <div class="col-auto align-self-end">
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+        <a class="btn btn-sm btn-link" asp-action="@Model.Action">Reset</a>
+    </div>
+</form>
+
+@if (Model.Table.Summary.Any())
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        @foreach (var (label, value) in Model.Table.Summary)
+        {
+            <div class="card card-kpi"><div class="card-body py-2 px-3"><div class="text-muted small">@label</div><div class="fw-semibold">@value</div></div></div>
+        }
+    </div>
+}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+            <tr>
+                @for (var i = 0; i < Model.Table.Columns.Length; i++)
+                {
+                    <th>@Html.SortLink(Model.Table.Columns[i], i.ToString())</th>
+                }
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.Table.PageRows)
+            {
+                <tr>
+                    @foreach (var cell in row)
+                    {
+                        <td class="@(cell is decimal or int or double ? "text-end" : "")">@FormatCell(cell)</td>
+                    }
+                </tr>
+            }
+            @if (!Model.Table.PageRows.Any()) { <tr><td colspan="@Model.Table.Columns.Length" class="text-center text-muted py-4">No data for the selected filters.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer"><partial name="_Pager" model="Model.Table" /></div>
+</div>

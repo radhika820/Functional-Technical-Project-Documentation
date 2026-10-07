@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Permissions";
+    var rows = new[]
+    {
+        ("Dashboard", "Full", "Team", "Own / assigned"),
+        ("Customers", "Full", "Team / business scope", "Own / assigned"),
+        ("Leads", "Full", "Team", "Own / assigned"),
+        ("Follow-Ups", "Full", "Team", "Own / assigned"),
+        ("Opportunities", "Full", "Team", "Own / assigned"),
+        ("Activities", "Full", "Team", "Own / assigned"),
+        ("User Management", "Full", "View team (read-only, configurable)", "No"),
+        ("Role Management", "Full", "No", "No"),
+        ("Audit Log", "Full", "Team entries only if enabled in configuration", "No"),
+        ("REST API", "Authorized endpoints", "Authorized endpoints", "Authorized endpoints"),
+        ("Reports", "All", "Management / team reports", "Own / assigned reports")
+    };
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Permission matrix</h1>
+    <a class="btn btn-outline-secondary" asp-action="Roles">Roles</a>
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-striped align-middle mb-0">
+    <thead class="table-light"><tr><th>Module</th><th>Admin</th><th>Manager</th><th>Sales Executive</th></tr></thead>
+    <tbody>
+    @foreach (var (module, admin, manager, sales) in rows)
+    {
+        <tr><td class="fw-semibold">@module</td><td>@admin</td><td>@manager</td><td>@sales</td></tr>
+    }
+    </tbody></table></div></div>
+<p class="text-muted small mt-2">Authorization is enforced on the server for every page, record and API endpoint - not only by hiding menu items. "Team" means the manager's own records plus those of the Sales Executives who report to them.</p>

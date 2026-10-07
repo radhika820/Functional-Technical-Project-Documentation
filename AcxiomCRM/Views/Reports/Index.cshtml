@@ -1,0 +1,19 @@
+@model IEnumerable<ReportLink>
+@{ ViewData["Title"] = "Reports"; }
+<h1 class="h4 mb-3">Reports</h1>
+<p class="text-muted">Reports show only the records you are authorized to see. All reports support filtering, sorting, paging and CSV export.</p>
+<div class="row g-3">
+@foreach (var r in Model)
+{
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 @(r.Allowed ? "" : "opacity-50")">
+            <div class="card-body">
+                <h2 class="h6">@r.Title</h2>
+                <p class="text-muted small mb-3">@r.Description</p>
+                @if (r.Allowed) { <a class="btn btn-sm btn-primary stretched-link" asp-action="@r.Action">Open report</a> }
+                else { <span class="badge text-bg-secondary">Not available for your role</span> }
+            </div>
+        </div>
+    </div>
+}
+</div>

@@ -1,0 +1,49 @@
+@model PipelineBoardViewModel
+@{ ViewData["Title"] = "Sales pipeline"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-0">Sales pipeline</h1>
+        <div class="text-muted small">Open: <strong>@Html.Money(Model.OpenAmount)</strong> &middot; Weighted: <strong>@Html.Money(Model.WeightedAmount)</strong></div>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> New opportunity</a>
+</div>
+
+<div class="d-flex gap-3 overflow-auto pb-3">
+@foreach (var stage in OpportunityStages.All)
+{
+    var items = Model.Columns[stage];
+    <div class="pipeline-col flex-fill">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">@Ui.StatusBadge(stage)</h2>
+            <span class="small text-muted">@items.Count &middot; @Html.Money(items.Sum(i => i.Amount))</span>
+        </div>
+        @foreach (var o in items)
+        {
+            <div class="card pipeline-card mb-2 shadow-sm">
+                <div class="card-body p-2">
+                    <a asp-action="Details" asp-route-id="@o.OpportunityId" class="fw-semibold text-decoration-none">@o.OpportunityName</a>
+                    <div class="small text-muted">@o.Customer?.CustomerName</div>
+                    <div class="d-flex justify-content-between small mt-1">
+                        <span>@Html.Money(o.Amount)</span><span>@o.Probability%</span>
+                    </div>
+                    <div class="small text-muted">Close @AppFormat.Date(o.ExpectedCloseDate) &middot; @Ui.Owner(o.AssignedUser)</div>
+                    @if (o.IsActive)
+                    {
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            @foreach (var s in OpportunityStages.All.Where(s => s != o.Stage))
+                            {
+                                <form method="post" asp-action="MoveStage" asp-route-id="@o.OpportunityId" data-confirm="@(s is "Won" or "Lost" ? $"Mark '{o.OpportunityName}' as {s}?" : null)">
+                                    <input type="hidden" name="stage" value="@s" />
+                                    <button type="submit" class="btn btn-sm btn-outline-@Ui.Badge(s) py-0 px-1" style="font-size:.75rem" title="Move to @s">@s</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        @if (!items.Any()) { <div class="text-muted small fst-italic">Nothing here.</div> }
+    </div>
+}
+</div>

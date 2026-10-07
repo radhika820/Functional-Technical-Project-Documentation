@@ -1,0 +1,52 @@
+@model LoginViewModel
+@inject IWebHostEnvironment Env
+@inject IConfiguration Config
+@{ ViewData["Title"] = "Sign in"; }
+
+<div class="card shadow-sm auth-card">
+    <div class="card-body p-4">
+        <h1 class="h4 mb-1">Sign in to AcxiomCRM</h1>
+        <p class="text-muted small">Enter your credentials to continue.</p>
+
+        <form method="post" asp-action="Login" novalidate>
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label required-star"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" autofocus />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label required-star"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign in</button>
+        </form>
+
+        @if (Config.GetValue("Features:AllowSelfRegistration", true))
+        {
+            <p class="small text-center mt-3 mb-0">New here? <a asp-action="Register">Create an account</a></p>
+        }
+    </div>
+</div>
+
+@if (Env.IsDevelopment())
+{
+    <div class="auth-card mt-0 small text-muted">
+        <strong>Demo accounts (Development only)</strong>
+        <ul class="mb-0">
+            <li>admin@acxiomcrm.local / Admin@12345</li>
+            <li>manager@acxiomcrm.local / Manager@12345</li>
+            <li>sales1@acxiomcrm.local / Sales@12345</li>
+            <li>sales2@acxiomcrm.local / Sales@12345</li>
+        </ul>
+    </div>
+}
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,65 @@
+@model AuditListViewModel
+@{ ViewData["Title"] = "Audit log"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Audit log</h1>
+    @if (User.IsInRole(AppRoles.Admin))
+    {
+        <a class="btn btn-outline-secondary" asp-controller="Reports" asp-action="Audit"><i class="bi bi-download"></i> Audit report / export</a>
+    }
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-2"><input name="user" value="@Model.User" class="form-control" placeholder="User (email)" aria-label="User" /></div>
+    <div class="col-md-2">
+        <select name="module" class="form-select" aria-label="Module">
+            <option value="">All modules</option>
+            @foreach (var m in AuditEntities.All) { <option value="@m" selected="@(Model.Module == m)">@m</option> }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="act" class="form-select" aria-label="Action">
+            <option value="">All actions</option>
+            @foreach (var a in AuditActions.All) { <option value="@a" selected="@(Model.Action == a)">@a</option> }
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select name="result" class="form-select" aria-label="Result">
+            <option value="">Any</option>
+            <option value="Success" selected="@(Model.Result == "Success")">Success</option>
+            <option value="Failure" selected="@(Model.Result == "Failure")">Failure</option>
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-1">
+        <input type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" class="form-control" aria-label="From date" title="From date" />
+        <input type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" class="form-control" aria-label="To date" title="To date" />
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+        <a class="btn btn-link" asp-action="Index">Reset</a></div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>Time</th><th>User</th><th>Action</th><th>Module</th><th>Record</th><th>Result</th><th>IP</th><th>Details</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.Data.Items)
+            {
+                <tr>
+                    <td class="text-nowrap">@AppFormat.DateTimeLocal(a.CreatedDate)</td>
+                    <td>@(a.UserName ?? "-")</td>
+                    <td>@a.Action</td>
+                    <td>@a.EntityName</td>
+                    <td>@(a.RecordId ?? "-")</td>
+                    <td>@Ui.StatusBadge(a.Result)</td>
+                    <td class="small text-muted">@a.IpAddress</td>
+                    <td class="small text-muted">@a.Details</td>
+                    <td><a asp-action="Details" asp-route-id="@a.AuditLogId" title="View old/new values"><i class="bi bi-eye"></i></a></td>
+                </tr>
+            }
+            @if (!Model.Data.Items.Any()) { <tr><td colspan="9" class="text-center text-muted py-4">No audit entries match the filter.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer"><partial name="_Pager" model="Model.Data" /></div>
+</div>

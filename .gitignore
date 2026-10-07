@@ -1,0 +1,41 @@
+# Build output
+**/bin/
+**/obj/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Environment / secrets
+.env
+.env.*
+appsettings.Development.json
+appsettings.Local.json
+
+# Database / local files
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Node
+node_modules/
+
+# Publish output
+**/publish/
+
+# Temporary files
+*.tmp
+*.temp

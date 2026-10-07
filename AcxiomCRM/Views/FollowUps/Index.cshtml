@@ -1,0 +1,120 @@
+@model FollowUpListViewModel
+@{
+    ViewData["Title"] = Model.PendingView ? "Pending follow-ups" : "Follow-ups";
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var action = Model.PendingView ? "Pending" : "Index";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">@ViewData["Title"]</h1>
+    <div class="d-flex gap-2">
+        @if (Model.PendingView) { <a class="btn btn-outline-secondary" asp-action="Index">All follow-ups</a> }
+        else { <a class="btn btn-outline-secondary" asp-action="Pending">Pending only</a> }
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> Schedule follow-up</a>
+    </div>
+</div>
+
+<form method="get" asp-action="@action" class="row g-2 mb-3">
+    <div class="col-md-3"><input name="q" value="@Model.Query.Q" class="form-control" placeholder="Subject, customer or lead" aria-label="Search" /></div>
+    <div class="col-md-2">
+        <select name="status" class="form-select" aria-label="Status">
+            <option value="">@(Model.PendingView ? "Planned (all)" : "All statuses")</option>
+            @if (!Model.PendingView)
+            {
+                @foreach (var s in FollowUpStatuses.All) { <option value="@s" selected="@(Model.Query.Status == s)">@s</option> }
+            }
+            <option value="Overdue" selected="@(Model.Query.Status == "Overdue")">Overdue</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="type" class="form-select" aria-label="Type">
+            <option value="">All types</option>
+            @foreach (var t in FollowUpTypes.All) { <option value="@t" selected="@(Model.Query.Type == t)">@t</option> }
+        </select>
+    </div>
+    @if (!User.IsInRole(AppRoles.SalesExecutive))
+    {
+        <div class="col-md-2">
+            <select name="assignedTo" class="form-select" aria-label="Assigned user">
+                <option value="">All users</option>
+                @foreach (var o in Model.Owners) { <option value="@o.Value" selected="@o.Selected">@o.Text</option> }
+            </select>
+        </div>
+    }
+    <div class="col-md-3 d-flex gap-1">
+        <input type="date" name="from" value="@Model.Query.From?.ToString("yyyy-MM-dd")" class="form-control" aria-label="From date" title="From date" />
+        <input type="date" name="to" value="@Model.Query.To?.ToString("yyyy-MM-dd")" class="form-control" aria-label="To date" title="To date" />
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Filter</button>
+        <a class="btn btn-link" asp-action="@action">Reset</a></div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+            <tr>
+                <th>@Html.SortLink("Date", "date")</th><th>@Html.SortLink("Subject", "subject")</th><th>Related to</th>
+                <th>@Html.SortLink("Type", "type")</th><th>@Html.SortLink("Status", "status")</th><th>@Html.SortLink("Assigned to", "owner")</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var f in Model.Data.Items)
+            {
+                <tr class="@(f.IsOverdue ? "table-danger" : "")">
+                    <td class="text-nowrap">@AppFormat.Date(f.FollowUpDate)</td>
+                    <td><a asp-action="Details" asp-route-id="@f.FollowUpId">@f.Subject</a></td>
+                    <td>
+                        @if (f.Customer != null) { <a asp-controller="Customers" asp-action="Details" asp-route-id="@f.CustomerId">@f.Customer.CustomerName</a> }
+                        else if (f.Lead != null) { <a asp-controller="Leads" asp-action="Details" asp-route-id="@f.LeadId">@f.Lead.LeadName</a> }
+                        else if (f.Opportunity != null) { <a asp-controller="Opportunities" asp-action="Details" asp-route-id="@f.OpportunityId">@f.Opportunity.OpportunityName</a> }
+                        else { <text>-</text> }
+                    </td>
+                    <td>@f.FollowUpType</td>
+                    <td>@Ui.StatusBadge(f.Status) @if (f.IsOverdue) { @Ui.StatusBadge("Overdue") }</td>
+                    <td>@Ui.Owner(f.AssignedUser)</td>
+                    <td class="text-end text-nowrap table-actions">
+                        @if (f.Status == FollowUpStatuses.Planned)
+                        {
+                            <div class="dropdown d-inline">
+                                <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Actions</button>
+                                <div class="dropdown-menu dropdown-menu-end p-2" style="min-width:290px">
+                                    <form method="post" asp-action="Complete" asp-route-id="@f.FollowUpId" class="mb-2">
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <input type="text" name="remarks" maxlength="1000" class="form-control form-control-sm mb-1" placeholder="Outcome notes (optional)" aria-label="Outcome notes" />
+                                        <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-check2"></i> Mark completed</button>
+                                    </form>
+                                    <form method="post" asp-action="Reschedule" asp-route-id="@f.FollowUpId" class="mb-2 d-flex gap-1">
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <input type="date" name="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" class="form-control form-control-sm" aria-label="New date" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Reschedule</button>
+                                    </form>
+                                    <div class="d-flex gap-1">
+                                        @if (f.FollowUpDate.Date <= DateTime.Today)
+                                        {
+                                            <form method="post" asp-action="Missed" asp-route-id="@f.FollowUpId" class="flex-fill">
+                                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Missed</button>
+                                            </form>
+                                        }
+                                        <form method="post" asp-action="Cancel" asp-route-id="@f.FollowUpId" class="flex-fill" data-confirm="Cancel this follow-up?">
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Cancel</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@f.FollowUpId" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <form method="post" asp-action="Delete" asp-route-id="@f.FollowUpId" data-confirm="Delete this follow-up?">
+                            <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Data.Items.Any()) { <tr><td colspan="7" class="text-center text-muted py-4">No follow-ups found.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer"><partial name="_Pager" model="Model.Data" /></div>
+</div>

@@ -1,0 +1,124 @@
+@{
+    var authed = User.Identity?.IsAuthenticated == true;
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var isManager = User.IsInRole(AppRoles.Manager);
+    var role = isAdmin ? "Admin" : isManager ? "Manager" : User.IsInRole(AppRoles.SalesExecutive) ? "Sales Executive" : "";
+    string Active(string controller) =>
+        string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "Home") - AcxiomCRM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-acxiom">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index"><i class="bi bi-graph-up-arrow me-1"></i>AcxiomCRM</a>
+                @if (authed)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="mainNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link @Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Customers")" asp-controller="Customers" asp-action="Index"><i class="bi bi-people"></i> Customers</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Leads")" asp-controller="Leads" asp-action="Index"><i class="bi bi-person-lines-fill"></i> Leads</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @Active("Opportunities")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-currency-rupee"></i> Opportunities</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Opportunities" asp-action="Index">All opportunities</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Opportunities" asp-action="Pipeline">Sales pipeline</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @Active("FollowUps")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-alarm"></i> Follow-Ups</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="FollowUps" asp-action="Pending">Pending follow-ups</a></li>
+                                    <li><a class="dropdown-item" asp-controller="FollowUps" asp-action="Index">All follow-ups</a></li>
+                                    <li><a class="dropdown-item" asp-controller="FollowUps" asp-action="Create">Schedule follow-up</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item"><a class="nav-link @Active("Activities")" asp-controller="Activities" asp-action="Index"><i class="bi bi-calendar-check"></i> Activities</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="bi bi-bar-chart"></i> Reports</a></li>
+                            @if (isAdmin || isManager)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle @Active("Users") @Active("AuditLogs")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-shield-lock"></i> Administration</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="Users" asp-action="Index">Users</a></li>
+                                        @if (isAdmin)
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="Users" asp-action="Roles">Roles</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Users" asp-action="Permissions">Permissions</a></li>
+                                        }
+                                        <li><a class="dropdown-item" asp-controller="AuditLogs" asp-action="Index">Audit log</a></li>
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                        <form class="d-flex me-lg-3 mb-2 mb-lg-0" role="search" method="get" asp-controller="Home" asp-action="Search">
+                            <input class="form-control form-control-sm me-2" type="search" name="q" placeholder="Search customers, leads, opportunities" aria-label="Global search" minlength="2" maxlength="100" />
+                            <button class="btn btn-sm btn-outline-light" type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
+                        </form>
+                        <vc:follow-up-alerts />
+                        <div class="dropdown">
+                            <a class="btn btn-sm btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i> @User.Identity!.Name
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text small text-muted">Signed in as<br /><strong>@role</strong></span></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Change password</a></li>
+                                <li>
+                                    <form method="post" asp-controller="Account" asp-action="Logout">
+                                        <button type="submit" class="dropdown-item">Log out</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-fluid py-4 flex-grow-1" role="main">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+
+    <footer class="border-top py-3 text-center text-muted small bg-body-tertiary">
+        &copy; @DateTime.Now.Year AcxiomCRM &middot; Developed by Radhika Goyal (GITAM) &middot; Acxiom Consulting assignment
+    </footer>
+
+    <!-- Confirmation dialog for destructive actions -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Please confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">Are you sure?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmModalOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,69 @@
+@model FollowUpFormViewModel
+@{
+    var isNew = Model.FollowUpId == 0;
+    ViewData["Title"] = isNew ? "Schedule follow-up" : "Edit follow-up";
+}
+<h1 class="h4 mb-3">@ViewData["Title"]</h1>
+
+<form method="post" asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.FollowUpId)" novalidate>
+    <input type="hidden" asp-for="FollowUpId" />
+    <input type="hidden" asp-for="IsNew" />
+    @if (isNew) { <input type="hidden" asp-for="Status" /> }
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+    <div class="card"><div class="card-body"><div class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="Subject" class="form-label required-star"></label>
+            <input asp-for="Subject" class="form-control" maxlength="150" />
+            <span asp-validation-for="Subject" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FollowUpType" class="form-label required-star"></label>
+            <select asp-for="FollowUpType" class="form-select" asp-items="@CrmItems.From(FollowUpTypes.All, Model.FollowUpType)"></select>
+            <span asp-validation-for="FollowUpType" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CustomerId" class="form-label"></label>
+            <select asp-for="CustomerId" class="form-select" asp-items="Model.Customers"><option value="">-- None --</option></select>
+            <span asp-validation-for="CustomerId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="LeadId" class="form-label"></label>
+            <select asp-for="LeadId" class="form-select" asp-items="Model.Leads"><option value="">-- None --</option></select>
+            <span asp-validation-for="LeadId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="OpportunityId" class="form-label"></label>
+            <select asp-for="OpportunityId" class="form-select" asp-items="Model.Opportunities"><option value="">-- None --</option></select>
+            <span asp-validation-for="OpportunityId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FollowUpDate" class="form-label required-star"></label>
+            <input asp-for="FollowUpDate" type="date" class="form-control" min="@(Model.Status == FollowUpStatuses.Planned ? DateTime.Today.ToString("yyyy-MM-dd") : null)" />
+            <span asp-validation-for="FollowUpDate" class="text-danger"></span>
+        </div>
+        @if (!isNew)
+        {
+            <div class="col-md-4">
+                <label asp-for="Status" class="form-label required-star"></label>
+                <select asp-for="Status" class="form-select" asp-items="@CrmItems.From(FollowUpStatuses.All, Model.Status)"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+        }
+        <div class="col-md-4">
+            <label asp-for="AssignedTo" class="form-label"></label>
+            <select asp-for="AssignedTo" class="form-select" asp-items="Model.Owners"></select>
+            <span asp-validation-for="AssignedTo" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Remarks" class="form-label"></label>
+            <textarea asp-for="Remarks" class="form-control" rows="3" maxlength="1000"></textarea>
+            <span asp-validation-for="Remarks" class="text-danger"></span>
+        </div>
+    </div></div>
+    <div class="card-footer text-end">
+        <a class="btn btn-link" asp-action="Pending">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div></div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

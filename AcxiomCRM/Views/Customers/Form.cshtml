@@ -1,0 +1,69 @@
+@model CustomerFormViewModel
+@{
+    var isNew = Model.CustomerId == 0;
+    ViewData["Title"] = isNew ? "New customer" : "Edit customer";
+}
+<h1 class="h4 mb-3">@ViewData["Title"]</h1>
+
+<form method="post" asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.CustomerId)" novalidate>
+    <input type="hidden" asp-for="CustomerId" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+    <div class="card"><div class="card-body"><div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="CustomerName" class="form-label required-star"></label>
+            <input asp-for="CustomerName" class="form-control" maxlength="150" />
+            <span asp-validation-for="CustomerName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="CompanyName" class="form-label"></label>
+            <input asp-for="CompanyName" class="form-control" maxlength="150" />
+            <span asp-validation-for="CompanyName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label required-star"></label>
+            <input asp-for="Email" type="email" class="form-control" maxlength="150" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Phone" class="form-label required-star"></label>
+            <input asp-for="Phone" class="form-control" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Address" class="form-label"></label>
+            <input asp-for="Address" class="form-control" maxlength="300" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="City" class="form-label"></label>
+            <input asp-for="City" class="form-control" maxlength="100" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="State" class="form-label"></label>
+            <input asp-for="State" class="form-control" maxlength="100" />
+            <span asp-validation-for="State" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Status" class="form-label"></label>
+            <select asp-for="Status" class="form-select" asp-items="@CrmItems.From(CustomerStatuses.All, Model.Status)"></select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="AssignedTo" class="form-label"></label>
+            <select asp-for="AssignedTo" class="form-select" asp-items="Model.Owners"></select>
+            <span asp-validation-for="AssignedTo" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" class="form-control" rows="3" maxlength="1000"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+    </div></div>
+    <div class="card-footer text-end">
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div></div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,19 @@
+@model AuditLog
+@{ ViewData["Title"] = "Audit entry #" + Model.AuditLogId; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Audit entry #@Model.AuditLogId</h1>
+    <a class="btn btn-link" asp-action="Index">Back to list</a>
+</div>
+<div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+    <dt class="col-sm-3">Time</dt><dd class="col-sm-9">@AppFormat.DateTimeLocal(Model.CreatedDate)</dd>
+    <dt class="col-sm-3">User</dt><dd class="col-sm-9">@(Model.UserName ?? "-")</dd>
+    <dt class="col-sm-3">Action</dt><dd class="col-sm-9">@Model.Action</dd>
+    <dt class="col-sm-3">Module / record</dt><dd class="col-sm-9">@Model.EntityName @(Model.RecordId != null ? "#" + Model.RecordId : "")</dd>
+    <dt class="col-sm-3">Result</dt><dd class="col-sm-9">@Ui.StatusBadge(Model.Result)</dd>
+    <dt class="col-sm-3">IP address</dt><dd class="col-sm-9">@(Model.IpAddress ?? "-")</dd>
+    <dt class="col-sm-3">Details</dt><dd class="col-sm-9">@(Model.Details ?? "-")</dd>
+</dl></div></div>
+<div class="row g-3">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">Old value</div><div class="card-body"><pre class="mb-0 small" style="white-space:pre-wrap">@(Model.OldValue ?? "-")</pre></div></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-header">New value</div><div class="card-body"><pre class="mb-0 small" style="white-space:pre-wrap">@(Model.NewValue ?? "-")</pre></div></div></div>
+</div>

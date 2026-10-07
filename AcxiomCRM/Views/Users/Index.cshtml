@@ -1,0 +1,82 @@
+@model UserListViewModel
+@{ ViewData["Title"] = "Users"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Users @if (!Model.CanAdminister) { <small class="text-muted fs-6">(read-only team view)</small> }</h1>
+    @if (Model.CanAdminister)
+    {
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" asp-action="Roles">Roles</a>
+            <a class="btn btn-outline-secondary" asp-action="Permissions">Permissions</a>
+            <a class="btn btn-primary" asp-action="Create"><i class="bi bi-person-plus"></i> New user</a>
+        </div>
+    }
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4"><input name="q" value="@Model.Q" class="form-control" placeholder="Search name or email" aria-label="Search" /></div>
+    <div class="col-md-3">
+        <select name="role" class="form-select" aria-label="Role">
+            <option value="">All roles</option>
+            @foreach (var r in AppRoles.All) { <option value="@r" selected="@(Model.Role == r)">@r</option> }
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+        <a class="btn btn-link" asp-action="Index">Reset</a></div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Manager</th><th>Status</th><th>Lockout</th><th>Created</th>@if (Model.CanAdminister) { <th></th> }</tr>
+            </thead>
+            <tbody>
+            @foreach (var u in Model.Users)
+            {
+                <tr>
+                    <td>@u.FullName</td>
+                    <td>@u.Email</td>
+                    <td><span class="badge text-bg-secondary">@u.Role</span></td>
+                    <td>@(u.ManagerName ?? "-")</td>
+                    <td>@if (u.IsActive) { <span class="badge text-bg-success">Active</span> } else { <span class="badge text-bg-secondary">Inactive</span> }</td>
+                    <td>
+                        @if (u.IsLockedOut) { <span class="badge text-bg-danger" title="Until @AppFormat.DateTimeLocal(u.LockoutEnd?.UtcDateTime)">Locked</span> }
+                        else if (u.FailedAttempts > 0) { <span class="text-muted small">@u.FailedAttempts failed attempt(s)</span> }
+                        else { <span class="text-muted small">OK</span> }
+                    </td>
+                    <td>@AppFormat.Date(u.CreatedDate.ToLocalTime())</td>
+                    @if (Model.CanAdminister)
+                    {
+                        <td class="text-end text-nowrap table-actions">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@u.Id" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="ResetPassword" asp-route-id="@u.Id" title="Reset password"><i class="bi bi-key"></i></a>
+                            @if (u.IsLockedOut)
+                            {
+                                <form method="post" asp-action="Unlock" asp-route-id="@u.Id">
+                                    <button class="btn btn-sm btn-outline-warning" type="submit" title="Unlock"><i class="bi bi-unlock"></i></button>
+                                </form>
+                            }
+                            @if (u.IsActive)
+                            {
+                                <form method="post" asp-action="SetActive" asp-route-id="@u.Id" data-confirm="Deactivate @u.Email? They will be signed out and unable to log in.">
+                                    <input type="hidden" name="active" value="false" />
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="Deactivate"><i class="bi bi-person-x"></i></button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-action="SetActive" asp-route-id="@u.Id">
+                                    <input type="hidden" name="active" value="true" />
+                                    <button class="btn btn-sm btn-outline-success" type="submit" title="Activate"><i class="bi bi-person-check"></i></button>
+                                </form>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+            @if (!Model.Users.Any()) { <tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

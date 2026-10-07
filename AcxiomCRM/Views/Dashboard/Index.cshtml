@@ -1,0 +1,173 @@
+@model DashboardViewModel
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-0">Dashboard</h1>
+        <div class="text-muted small">@Model.Role view &middot; @Model.RangeLabel</div>
+    </div>
+    <form method="get" class="row gx-2 gy-1 align-items-end" id="rangeForm">
+        <div class="col-auto">
+            <label class="form-label small mb-0" for="Range">Period</label>
+            <select name="Range" id="Range" class="form-select form-select-sm">
+                @foreach (var (value, text) in new[] { ("all", "All time"), ("today", "Today"), ("week", "This week"), ("month", "This month"), ("custom", "Custom range") })
+                {
+                    <option value="@value" selected="@(Model.Filter.Range == value)">@text</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto custom-range">
+            <label class="form-label small mb-0" for="From">From</label>
+            <input type="date" name="From" id="From" class="form-control form-control-sm" value="@Model.Filter.From?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto custom-range">
+            <label class="form-label small mb-0" for="To">To</label>
+            <input type="date" name="To" id="To" class="form-control form-control-sm" value="@Model.Filter.To?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto"><button type="submit" class="btn btn-sm btn-primary">Apply</button></div>
+    </form>
+</div>
+
+@{
+    void Kpi(string label, string value, string icon, string css = "", string? href = null)
+    {
+        <div class="col-6 col-md-4 col-xl-3">
+            <div class="card card-kpi @css h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">@label</div>
+                            <div class="kpi-value">@value</div>
+                        </div>
+                        <i class="bi @icon fs-3 text-muted"></i>
+                    </div>
+                    @if (href != null) { <a class="stretched-link small" href="@href">View</a> }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<div class="row g-3 mb-4">
+    @{ Kpi("Total Customers", Model.TotalCustomers.ToString(), "bi-people", "", Url.Action("Index", "Customers")); }
+    @{ Kpi("Total Leads", Model.TotalLeads.ToString(), "bi-person-lines-fill", "", Url.Action("Index", "Leads")); }
+    @{ Kpi("Open Leads", Model.OpenLeads.ToString(), "bi-funnel", "kpi-warning", Url.Action("Index", "Leads")); }
+    @{ Kpi("Total Opportunities", Model.TotalOpportunities.ToString(), "bi-briefcase", "", Url.Action("Index", "Opportunities")); }
+    @{ Kpi("Open Opportunities", Model.OpenOpportunities.ToString(), "bi-hourglass-split", "kpi-warning", Url.Action("Pipeline", "Opportunities")); }
+    @{ Kpi("Won Opportunities", Model.WonOpportunities.ToString(), "bi-trophy", "kpi-success"); }
+    @{ Kpi("Lost Opportunities", Model.LostOpportunities.ToString(), "bi-x-octagon", "kpi-danger"); }
+    @{ Kpi("Total Pipeline Value", AppFormat.Money(Model.TotalPipelineValue), "bi-currency-rupee", "kpi-success", Url.Action("Pipeline", "Opportunities")); }
+    @{ Kpi("Weighted Pipeline", AppFormat.Money(Model.WeightedPipelineValue), "bi-percent"); }
+    @{ Kpi("Pending Follow-ups", Model.PendingFollowUps.ToString(), "bi-alarm", "kpi-warning", Url.Action("Pending", "FollowUps")); }
+    @{ Kpi("Overdue Follow-ups", Model.OverdueFollowUps.ToString(), "bi-exclamation-circle", Model.OverdueFollowUps > 0 ? "kpi-danger" : "", Url.Action("Pending", "FollowUps", new { status = "Overdue" })); }
+</div>
+
+@if (Model.Admin is { } a)
+{
+    <h2 class="h6 text-uppercase text-muted">Administration</h2>
+    <div class="row g-3 mb-4">
+        @{ Kpi("Users (active / total)", $"{a.ActiveUsers} / {a.TotalUsers}", "bi-person-badge", "", Url.Action("Index", "Users")); }
+        @{ Kpi("Locked accounts", a.LockedUsers.ToString(), "bi-lock", a.LockedUsers > 0 ? "kpi-danger" : "", Url.Action("Index", "Users")); }
+        @{ Kpi("Audit events (24h)", a.AuditEvents24h.ToString(), "bi-journal-text", "", Url.Action("Index", "AuditLogs")); }
+        @{ Kpi("Failed logins (24h)", a.FailedLogins24h.ToString(), "bi-shield-exclamation", a.FailedLogins24h > 0 ? "kpi-danger" : "", Url.Action("Index", "AuditLogs", new { act = "FailedLogin" })); }
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100"><div class="card-header">Lead status</div>
+            <div class="card-body"><div class="chart-box"><canvas id="leadChart" aria-label="Lead status chart" role="img"></canvas></div></div></div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100"><div class="card-header">Opportunity pipeline</div>
+            <div class="card-body"><div class="chart-box"><canvas id="pipelineChart" aria-label="Opportunity pipeline chart" role="img"></canvas></div></div></div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100"><div class="card-header">Monthly sales (last 12 months)</div>
+            <div class="card-body"><div class="chart-box"><canvas id="salesChart" aria-label="Monthly sales chart" role="img"></canvas></div></div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between"><span>Upcoming &amp; overdue follow-ups (next 7 days)</span>
+        <a asp-controller="FollowUps" asp-action="Pending" class="small">All pending</a></div>
+    @if (!Model.Upcoming.Any())
+    {
+        <div class="card-body text-muted">No follow-ups due in the next 7 days.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead><tr><th>Date</th><th>Subject</th><th>Related to</th><th>Type</th><th>Owner</th></tr></thead>
+                <tbody>
+                @foreach (var f in Model.Upcoming)
+                {
+                    <tr class="@(f.IsOverdue ? "table-danger" : "")">
+                        <td>@AppFormat.Date(f.FollowUpDate) @if (f.IsOverdue) { <span class="badge text-bg-danger">Overdue</span> }</td>
+                        <td><a asp-controller="FollowUps" asp-action="Details" asp-route-id="@f.FollowUpId">@f.Subject</a></td>
+                        <td>@(f.Customer?.CustomerName ?? f.Lead?.LeadName ?? "-")</td>
+                        <td>@f.FollowUpType</td>
+                        <td>@Ui.Owner(f.AssignedUser)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script id="dash-data" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+    {
+        leads = Model.LeadStatusCounts,
+        pipeline = Model.Pipeline.Select(p => new { stage = p.Stage, count = p.Count, amount = p.Amount }),
+        sales = Model.MonthlySales.Select(m => new { month = m.Month, won = m.Won, lost = m.Lost })
+    }).Replace("<", "\\u003c"))</script>
+    <script>
+        (function () {
+            var range = document.getElementById('Range');
+            function toggle() {
+                document.querySelectorAll('.custom-range').forEach(function (el) { el.style.display = range.value === 'custom' ? '' : 'none'; });
+            }
+            range.addEventListener('change', toggle); toggle();
+
+            if (!window.Chart) return;
+            var data = JSON.parse(document.getElementById('dash-data').textContent);
+            var palette = ['#2e7d9a', '#f0ad4e', '#198754', '#6c757d', '#0d6efd', '#dc3545'];
+
+            var leadLabels = Object.keys(data.leads);
+            new Chart(document.getElementById('leadChart'), {
+                type: 'doughnut',
+                data: { labels: leadLabels, datasets: [{ data: leadLabels.map(function (k) { return data.leads[k]; }), backgroundColor: palette }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            new Chart(document.getElementById('pipelineChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.pipeline.map(function (p) { return p.stage; }),
+                    datasets: [{ label: 'Opportunities', data: data.pipeline.map(function (p) { return p.count; }), backgroundColor: '#2e7d9a' }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { callbacks: { afterLabel: function (ctx) { return 'Amount: INR ' + Number(data.pipeline[ctx.dataIndex].amount).toLocaleString('en-IN'); } } } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+
+            new Chart(document.getElementById('salesChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.sales.map(function (m) { return m.month; }),
+                    datasets: [
+                        { label: 'Won (INR)', data: data.sales.map(function (m) { return m.won; }), backgroundColor: '#198754' },
+                        { label: 'Lost (INR)', data: data.sales.map(function (m) { return m.lost; }), backgroundColor: '#dc3545' }
+                    ]
+                },
+                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } }
+            });
+        })();
+    </script>
+}

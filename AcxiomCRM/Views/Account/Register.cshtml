@@ -1,0 +1,38 @@
+@model RegisterViewModel
+@{ ViewData["Title"] = "Register"; }
+
+<div class="card shadow-sm auth-card">
+    <div class="card-body p-4">
+        <h1 class="h4 mb-1">Create an account</h1>
+        <p class="text-muted small">New accounts are created as Sales Executives. An administrator can change your role.</p>
+
+        <form method="post" asp-action="Register" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label required-star"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="name" autofocus />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label required-star"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label required-star"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <div class="form-text">At least 8 characters with upper-case, lower-case, a digit and a symbol.</div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label required-star"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        <p class="small text-center mt-3 mb-0">Already registered? <a asp-action="Login">Sign in</a></p>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

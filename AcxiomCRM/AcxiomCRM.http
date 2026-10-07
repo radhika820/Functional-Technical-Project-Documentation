@@ -1,0 +1,92 @@
+# REST API requests for the Visual Studio / VS Code REST Client.
+# Start the app (dotnet run), then run "Login" first and paste the token into @token below.
+
+@host = https://localhost:7180
+
+### 1. Login (Sales Executive demo account)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "sales1@acxiomcrm.local", "password": "Sales@12345" }
+
+### 2. Paste the token from step 1 here
+@token = PASTE_TOKEN_HERE
+
+### List customers (200, scoped to the caller)
+GET {{host}}/api/customers?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+### Same call without a token -> 401
+GET {{host}}/api/customers
+
+### Create customer (201). Run twice to see 409 (duplicate email/phone)
+POST {{host}}/api/customers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "customerName": "Demo Customer", "email": "demo.customer@example.com", "phone": "9811122233", "companyName": "Demo Pvt Ltd" }
+
+### Invalid payload -> 400 with field errors
+POST {{host}}/api/customers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "customerName": "", "email": "bad", "phone": "123" }
+
+### Get / update / delete customer 1
+GET {{host}}/api/customers/1
+Authorization: Bearer {{token}}
+
+###
+PUT {{host}}/api/customers/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "customerName": "Anita Rao", "email": "anita.rao@example.com", "phone": "9876500001", "status": "Active" }
+
+### Leads
+GET {{host}}/api/leads
+Authorization: Bearer {{token}}
+
+###
+POST {{host}}/api/leads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "leadName": "API Lead", "email": "api.lead@example.com", "phone": "9822233344", "source": "Website", "status": "New", "priority": "High", "expectedValue": 150000 }
+
+### Opportunities - Amount 0 -> 400 "Opportunity Amount must be greater than 0."
+POST {{host}}/api/opportunities
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "opportunityName": "Bad deal", "customerId": 1, "amount": 0, "stage": "Proposal", "probability": 40, "expectedCloseDate": "2030-01-01" }
+
+### Opportunities - valid
+POST {{host}}/api/opportunities
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "opportunityName": "API deal", "customerId": 1, "amount": 250000, "stage": "Proposal", "probability": 40, "expectedCloseDate": "2030-01-01" }
+
+### Probability 101 -> 400
+POST {{host}}/api/opportunities
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "opportunityName": "Bad prob", "customerId": 1, "amount": 100, "stage": "Proposal", "probability": 101, "expectedCloseDate": "2030-01-01" }
+
+### Follow-ups - date in the past -> 400 "Follow-up date cannot be earlier than today."
+POST {{host}}/api/followups
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "subject": "Old", "customerId": 1, "followUpDate": "2020-01-01", "followUpType": "Call", "status": "Planned" }
+
+### Pipeline report (scoped)
+GET {{host}}/api/reports/pipeline
+Authorization: Bearer {{token}}
+
+### Logout (all tokens issued before now stop working)
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{token}}

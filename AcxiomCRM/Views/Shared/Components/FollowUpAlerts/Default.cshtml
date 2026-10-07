@@ -1,0 +1,11 @@
+@model FollowUpAlertsModel
+<a class="btn btn-sm btn-outline-light position-relative me-lg-2 mb-2 mb-lg-0" asp-controller="FollowUps" asp-action="Pending"
+   title="@Model.Overdue overdue, @Model.DueToday due today" aria-label="Follow-up notifications">
+    <i class="bi bi-bell"></i>
+    @if (Model.Total > 0)
+    {
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill @(Model.Overdue > 0 ? "bg-danger" : "bg-warning text-dark")">
+            @Model.Total<span class="visually-hidden"> follow-ups need attention</span>
+        </span>
+    }
+</a>

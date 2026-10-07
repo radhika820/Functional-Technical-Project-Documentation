@@ -1,0 +1,50 @@
+@model ConvertLeadViewModel
+@{ ViewData["Title"] = "Convert lead"; var l = Model.Lead!; }
+<h1 class="h4 mb-1">Convert lead to customer &amp; opportunity</h1>
+<p class="text-muted">@l.LeadName (@l.LeadCode) &middot; @l.Email &middot; @l.Phone</p>
+
+@if (Model.ExistingCustomer != null)
+{
+    <div class="alert alert-info">
+        A customer with the same email or phone already exists
+        (<a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.ExistingCustomer.CustomerId">@Model.ExistingCustomer.CustomerCode - @Model.ExistingCustomer.CustomerName</a>).
+        The lead will be linked to that customer instead of creating a duplicate.
+    </div>
+}
+else
+{
+    <div class="alert alert-secondary">A new customer record will be created from this lead's details.</div>
+}
+
+<form method="post" asp-action="Convert" asp-route-id="@Model.LeadId" novalidate>
+    <input type="hidden" asp-for="LeadId" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+    <div class="card"><div class="card-header">Opportunity details</div><div class="card-body"><div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="OpportunityName" class="form-label required-star"></label>
+            <input asp-for="OpportunityName" class="form-control" maxlength="150" />
+            <span asp-validation-for="OpportunityName" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Amount" class="form-label required-star"></label>
+            <input asp-for="Amount" type="number" step="0.01" min="0.01" class="form-control" />
+            <span asp-validation-for="Amount" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Probability" class="form-label required-star"></label>
+            <input asp-for="Probability" type="number" min="0" max="100" class="form-control" />
+            <span asp-validation-for="Probability" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ExpectedCloseDate" class="form-label required-star"></label>
+            <input asp-for="ExpectedCloseDate" type="date" class="form-control" />
+            <span asp-validation-for="ExpectedCloseDate" class="text-danger"></span>
+        </div>
+    </div></div>
+    <div class="card-footer text-end">
+        <a class="btn btn-link" asp-action="Details" asp-route-id="@Model.LeadId">Cancel</a>
+        <button type="submit" class="btn btn-success">Convert lead</button>
+    </div></div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

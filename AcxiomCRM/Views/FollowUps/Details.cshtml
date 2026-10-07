@@ -1,0 +1,25 @@
+@model FollowUp
+@{ ViewData["Title"] = Model.Subject; var f = Model; }
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-0">@f.Subject @Ui.StatusBadge(f.Status) @if (f.IsOverdue) { @Ui.StatusBadge("Overdue") }</h1>
+        <div class="text-muted">@f.FollowUpType on @AppFormat.Date(f.FollowUpDate)</div>
+    </div>
+    <div class="d-flex gap-1">
+        <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@f.FollowUpId"><i class="bi bi-pencil"></i> Edit</a>
+        <a class="btn btn-link btn-sm" asp-action="Pending">Back</a>
+    </div>
+</div>
+
+<div class="card"><div class="card-body"><dl class="row mb-0">
+    <dt class="col-sm-3">Related to</dt>
+    <dd class="col-sm-9">
+        @if (f.Customer != null) { <div>Customer: <a asp-controller="Customers" asp-action="Details" asp-route-id="@f.CustomerId">@f.Customer.CustomerName</a></div> }
+        @if (f.Lead != null) { <div>Lead: <a asp-controller="Leads" asp-action="Details" asp-route-id="@f.LeadId">@f.Lead.LeadName</a></div> }
+        @if (f.Opportunity != null) { <div>Opportunity: <a asp-controller="Opportunities" asp-action="Details" asp-route-id="@f.OpportunityId">@f.Opportunity.OpportunityName</a></div> }
+    </dd>
+    <dt class="col-sm-3">Assigned to</dt><dd class="col-sm-9">@Ui.Owner(f.AssignedUser)</dd>
+    <dt class="col-sm-3">Created</dt><dd class="col-sm-9">@AppFormat.DateTimeLocal(f.CreatedDate)</dd>
+    <dt class="col-sm-3">Completed</dt><dd class="col-sm-9">@AppFormat.DateTimeLocal(f.CompletedDate)</dd>
+    <dt class="col-sm-3">Remarks</dt><dd class="col-sm-9" style="white-space:pre-line">@(f.Remarks ?? "-")</dd>
+</dl></div></div>

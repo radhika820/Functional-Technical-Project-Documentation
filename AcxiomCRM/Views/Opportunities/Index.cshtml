@@ -1,0 +1,78 @@
+@model OpportunityListViewModel
+@{ ViewData["Title"] = "Opportunities"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Opportunities</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Pipeline"><i class="bi bi-kanban"></i> Pipeline board</a>
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> New opportunity</a>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input name="q" value="@Model.Query.Q" class="form-control" placeholder="Opportunity or customer name" aria-label="Search" /></div>
+    <div class="col-md-2">
+        <select name="stage" class="form-select" aria-label="Stage">
+            <option value="">All stages</option>
+            @foreach (var s in OpportunityStages.All) { <option value="@s" selected="@(Model.Query.Stage == s)">@s</option> }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select" aria-label="Status">
+            <option value="">Any status</option>
+            @foreach (var s in new[] { "Open", "Won", "Lost" }) { <option value="@s" selected="@(Model.Query.Status == s)">@s</option> }
+        </select>
+    </div>
+    @if (!User.IsInRole(AppRoles.SalesExecutive))
+    {
+        <div class="col-md-3">
+            <select name="assignedTo" class="form-select" aria-label="Owner">
+                <option value="">All owners</option>
+                @foreach (var o in Model.Owners) { <option value="@o.Value" selected="@o.Selected">@o.Text</option> }
+            </select>
+        </div>
+    }
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+        <a class="btn btn-link" asp-action="Index">Reset</a></div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+            <tr>
+                <th>@Html.SortLink("Opportunity", "name")</th><th>@Html.SortLink("Customer", "customer")</th><th>@Html.SortLink("Stage", "stage")</th>
+                <th class="text-end">@Html.SortLink("Amount", "amount")</th><th>@Html.SortLink("Prob.", "probability")</th>
+                <th class="text-end">Weighted</th><th>@Html.SortLink("Expected close", "close")</th><th>@Html.SortLink("Owner", "owner")</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var o in Model.Data.Items)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@o.OpportunityId">@o.OpportunityName</a></td>
+                    <td>@o.Customer?.CustomerName</td>
+                    <td>@Ui.StatusBadge(o.Stage)</td>
+                    <td class="text-end">@Html.Money(o.Amount)</td>
+                    <td>@o.Probability%</td>
+                    <td class="text-end">@Html.Money(o.WeightedAmount)</td>
+                    <td>@AppFormat.Date(o.ExpectedCloseDate)</td>
+                    <td>@Ui.Owner(o.AssignedUser)</td>
+                    <td class="text-end table-actions text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@o.OpportunityId" title="Details"><i class="bi bi-eye"></i></a>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@o.OpportunityId" title="Edit"><i class="bi bi-pencil"></i></a>
+                        @if (!User.IsInRole(AppRoles.SalesExecutive))
+                        {
+                            <form method="post" asp-action="Delete" asp-route-id="@o.OpportunityId" data-confirm="Delete opportunity @o.OpportunityName? This cannot be undone.">
+                                <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Data.Items.Any()) { <tr><td colspan="9" class="text-center text-muted py-4">No opportunities found.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer"><partial name="_Pager" model="Model.Data" /></div>
+</div>
